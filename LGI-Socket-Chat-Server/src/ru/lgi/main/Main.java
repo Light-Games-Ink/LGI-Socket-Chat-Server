@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 package ru.lgi.main;
 
 /**
