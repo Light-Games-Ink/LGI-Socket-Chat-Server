@@ -8,8 +8,8 @@ import naga.packetwriter.AsciiLinePacketWriter;
 
 class User implements SocketObserver
 {
-    private final static long LOGIN_TIMEOUT = 30 * 1000;
-    private final static long INACTIVITY_TIMEOUT = 5 * 60 * 100;
+    private final static long LOGIN_TIMEOUT = 1 * 60 * 1000; //1 min timeout
+    private final static long INACTIVITY_TIMEOUT = 30 * 60 * 1000; //30 min timeout
     private final Main m_server;
     private final NIOSocket m_socket;
     private String m_name;

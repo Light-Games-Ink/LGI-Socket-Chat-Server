@@ -7,5 +7,10 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/LGI-Socket-Chat-Server/naga-debug-3_0.jar!/docs/api"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="ZTI-Serialization-Tool.jar" sourcepath="ZTISM-source.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/LGI-Socket-Chat-Server/ZTISM-doc.zip!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
