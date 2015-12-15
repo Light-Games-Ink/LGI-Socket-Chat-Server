@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import by.zti.SerializationManager;
 import naga.ConnectionAcceptor;
 import naga.NIOServerSocket;
 import naga.NIOSocket;

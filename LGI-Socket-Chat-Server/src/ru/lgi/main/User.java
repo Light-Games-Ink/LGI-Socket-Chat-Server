@@ -1,7 +1,5 @@
 package ru.lgi.main;
 
-import java.awt.Color;
-
 import naga.NIOSocket;
 import naga.SocketObserver;
 import naga.eventmachine.DelayedEvent;
@@ -89,21 +87,21 @@ class User implements SocketObserver {
 			System.out.println(this + " logged in.");
 			if (m_color != null) {
 				m_server.broadcast(this,
-						"<span style=\"color:" + m_color + "\">" + m_name + "<span>" + " has joined the chat.");
-				m_socket.write(("Welcome " + "<span style=\"color:" + m_color + "\">" + m_name + "<span>"
+						"<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span> has joined the chat.");
+				m_socket.write(("Welcome " + "<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>"
 						+ ". There are " + m_server.getM_users().size() + " user(s) currently logged in.").getBytes());
 
 			} else {
-				m_server.broadcast(this, m_name + " has joined the chat.");
-				m_socket.write(("Welcome " + m_name + ". There are " + m_server.getM_users().size()
+				m_server.broadcast(this, "<b>"+ m_name + "</b> has joined the chat.");
+				m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
 						+ " user(s) currently logged in.").getBytes());
 			}
 			return;
 		}
 		if (m_color != null) {
-			m_server.broadcast(this, "<span style=\"color:" + m_color + "\">" + m_name + "<span>" + ": " + message);
+			m_server.broadcast(this, "<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>" + ": " + message);
 		} else {
-			m_server.broadcast(this, m_name + ": " + message);
+			m_server.broadcast(this, "<b>" + m_name + "</b>: " + message);
 		}
 	}
 
