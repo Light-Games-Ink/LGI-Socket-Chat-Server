@@ -12,8 +12,14 @@ class User implements SocketObserver {
 																	// timeout
 	private final Main m_server;
 	private final NIOSocket m_socket;
-	private String m_name, m_color;
+	private String m_name,m_color;
 	private DelayedEvent m_disconnectEvent;
+	private Users m_userCreds;
+	
+	public String getM_name() {
+		return m_name;
+	}
+
 
 	User(Main server, NIOSocket socket) {
 		m_server = server;
@@ -23,6 +29,7 @@ class User implements SocketObserver {
 		m_socket.listen(this);
 		m_name = null;
 		m_color = null;
+		m_userCreds = new Users();
 	}
 
 	public void connectionOpened(NIOSocket nioSocket) {
@@ -72,9 +79,23 @@ class User implements SocketObserver {
 		if (message.length() == 0)
 			return;
 		if (message.startsWith("&C")) {
+			//color setting
 			String temp_message = message.substring(2, 9);
 			m_color = temp_message;
 			message = message.substring(9, message.length());
+		}
+		else if(message.startsWith("&L")){
+			//login 
+			m_userCreds.setLogin(message.substring(3, message.indexOf("&P") + 2));
+			m_userCreds.setPassword(message.substring(message.indexOf("&P") + 2));
+			System.out.println(m_userCreds.getLogin() + "/n" + m_userCreds.getPassword());
+		}
+		else if(message.startsWith("&A")){
+			//admin control
+		}
+		else if(message.startsWith("&ULR")){
+			//user list request
+			m_server.userListRequest(this);
 		}
 		// Reset inactivity timer.
 		scheduleInactivityEvent();

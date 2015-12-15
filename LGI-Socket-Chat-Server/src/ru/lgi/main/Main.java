@@ -34,18 +34,20 @@ public class Main implements ServerSocketObserver {
 	/**
 	 * @param args
 	 */
-	//@SuppressWarnings("unchecked")
+	// @SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		try {
-			//settings = (ArrayList<Settings>) SerializationManager.deSerializeData("Settings", "ser", "");
-			//usersLaP = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
+			// settings = (ArrayList<Settings>)
+			// SerializationManager.deSerializeData("Settings", "ser", "");
+			// usersLaP = (ArrayList<Users>)
+			// SerializationManager.deSerializeData("Users", "ser", "");
 			port = Integer.parseInt(args[0]);
 			EventMachine machine = new EventMachine();
 			NIOServerSocket socket = machine.getNIOService().openServerSocket(port);
 			socket.listen(new Main(machine));
 			socket.setConnectionAcceptor(ConnectionAcceptor.ALLOW);
 			machine.start();
-				
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -72,7 +74,6 @@ public class Main implements ServerSocketObserver {
 	public void newConnection(NIOSocket nioSocket) {
 		System.out.println("New user connected from " + nioSocket.getIp() + ".");
 		getM_users().add(new User(this, nioSocket));
-		
 
 	}
 
@@ -82,11 +83,20 @@ public class Main implements ServerSocketObserver {
 	}
 
 	public void broadcast(User sender, String string) {
-		// We convert the packet, then send it to all users except the sender.
+		// We convert the packet, then send it to all users.
 		byte[] bytesToSend = string.getBytes();
 		for (User user : getM_users()) {
 			user.sendBroadcast(bytesToSend);
 		}
+	}
+
+	public void userListRequest(User sender) {
+		String msg = null;
+		for (User user : getM_users()) {
+			msg += user.getM_name() + "&ULR";
+		}
+		System.out.println(msg);
+		broadcast(sender, msg);
 	}
 
 	public List<User> getM_users() {
