@@ -24,7 +24,7 @@ public class Main implements ServerSocketObserver {
 	static ArrayList<Settings> settings = new ArrayList<Settings>();
 	static ArrayList<Users> usersLaP = new ArrayList<Users>();
 	private final EventMachine m_eventMachine;
-	private final List<User> m_users;
+	public final List<User> m_users;
 
 	Main(EventMachine machine) {
 		m_eventMachine = machine;
