@@ -27,7 +27,7 @@ class User implements SocketObserver {
 		m_socket.setPacketReader(new AsciiLinePacketReader());
 		m_socket.setPacketWriter(new AsciiLinePacketWriter());
 		m_socket.listen(this);
-		m_name = null;
+		m_name = "";
 		m_color = null;
 		m_userCreds = new Users();
 	}
@@ -46,12 +46,12 @@ class User implements SocketObserver {
 	}
 
 	public String toString() {
-		return m_name != null ? m_name + "@" + m_socket.getIp() : "anon@" + m_socket.getIp();
+		return !m_name.equals("") ? m_name + "@" + m_socket.getIp() : "anon@" + m_socket.getIp();
 	}
 
 	public void connectionBroken(NIOSocket nioSocket, Exception exception) {
 		// Inform the other users if the user was logged in.
-		if (m_name != null) {
+		if (!m_name.equals("")) {
 			m_server.broadcast(this, m_name + " left the chat.");
 		}
 		// Remove the user.
@@ -74,10 +74,31 @@ class User implements SocketObserver {
 		// Create the string. For real life scenarios, you'd handle exceptions
 		// here.
 		String message = new String(packet).trim();
-
 		// Ignore empty lines
 		if (message.length() == 0)
 			return;
+
+		// Reset inactivity timer.
+		scheduleInactivityEvent();
+
+		// In this protocol, the first line entered is the name.
+		if (m_name.equals("")) {
+			// User joined the chat.
+			m_name = message;
+			System.out.println(this + " logged in.");
+			if (m_color != null) {
+				m_server.broadcast(this,
+						"<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span> has joined the chat.");
+				m_socket.write(("Welcome " + "<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>"
+						+ ". There are " + m_server.getM_users().size() + " user(s) currently logged in.").getBytes());
+
+			} else {
+				m_server.broadcast(this, "<b>"+ m_name + "</b> has joined the chat.");
+				m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
+						+ " user(s) currently logged in.").getBytes());
+			}
+			return;
+		}
 		if (message.startsWith("&C")) {
 			//color setting
 			String temp_message = message.substring(2, 9);
@@ -97,29 +118,7 @@ class User implements SocketObserver {
 			//user list request
 			m_server.userListRequest(this);
 		}
-		// Reset inactivity timer.
-		scheduleInactivityEvent();
-
-		// In this protocol, the first line entered is the name.
-		if (m_name == null) {
-
-			// User joined the chat.
-			m_name = message;
-			System.out.println(this + " logged in.");
-			if (m_color != null) {
-				m_server.broadcast(this,
-						"<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span> has joined the chat.");
-				m_socket.write(("Welcome " + "<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>"
-						+ ". There are " + m_server.getM_users().size() + " user(s) currently logged in.").getBytes());
-
-			} else {
-				m_server.broadcast(this, "<b>"+ m_name + "</b> has joined the chat.");
-				m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
-						+ " user(s) currently logged in.").getBytes());
-			}
-			return;
-		}
-		if (m_color != null) {
+		else if (m_color != null) {
 			m_server.broadcast(this, "<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>" + ": " + message);
 		} else {
 			m_server.broadcast(this, "<b>" + m_name + "</b>: " + message);
@@ -132,7 +131,7 @@ class User implements SocketObserver {
 
 	public void sendBroadcast(byte[] bytesToSend) {
 		// Only send broadcast to users logged in.
-		if (m_name != null) {
+		if (!m_name.equals("")) {
 			m_socket.write(bytesToSend);
 		}
 

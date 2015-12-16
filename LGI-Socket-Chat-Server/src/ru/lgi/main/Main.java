@@ -41,7 +41,7 @@ public class Main implements ServerSocketObserver {
 			// SerializationManager.deSerializeData("Settings", "ser", "");
 			// usersLaP = (ArrayList<Users>)
 			// SerializationManager.deSerializeData("Users", "ser", "");
-			port = Integer.parseInt(args[0]);
+			port = Integer.parseInt("5674");
 			EventMachine machine = new EventMachine();
 			NIOServerSocket socket = machine.getNIOService().openServerSocket(port);
 			socket.listen(new Main(machine));
@@ -91,11 +91,10 @@ public class Main implements ServerSocketObserver {
 	}
 
 	public void userListRequest(User sender) {
-		String msg = null;
+		String msg = "";
 		for (User user : getM_users()) {
 			msg += user.getM_name() + "&ULR";
 		}
-		System.out.println(msg);
 		broadcast(sender, msg);
 	}
 
