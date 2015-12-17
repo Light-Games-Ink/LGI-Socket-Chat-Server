@@ -12,5 +12,10 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/LGI-Socket-Chat-Server/ZTISM-doc.zip!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="src" path=".apt_generated">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
