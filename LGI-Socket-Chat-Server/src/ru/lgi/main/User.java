@@ -40,7 +40,8 @@ class User implements SocketObserver {
 		m_userCreds = new Users();
 		isInTheList = false;
 		isAdmin = false;
-		//users = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
+		// users = (ArrayList<Users>)
+		// SerializationManager.deSerializeData("Users", "ser", "");
 	}
 
 	public void connectionOpened(NIOSocket nioSocket) {
@@ -137,30 +138,29 @@ class User implements SocketObserver {
 				if (isAdmin) {
 					socket.write("&A".getBytes());
 				}
-			}
-			else if (message.startsWith("&R")) {
-				//register
+			} else if (message.startsWith("&R")) {
+				// register
 				byte i = 0;
-				if(message.endsWith("&A")){
+				if (message.endsWith("&A")) {
 					isAdmin = true;
 					i = 2;
 				}
 				String tempLogin = message.substring(2, message.lastIndexOf("&P") - 2);
 				String tempPassword = message.substring(message.lastIndexOf("&P"), message.length() - i);
-				if(loginCheck(tempLogin, tempPassword)){
+				if (loginCheck(tempLogin, tempPassword)) {
 					socket.write("Error! Check your creds.".getBytes());
-				}
-				else{
+				} else {
 					m_userCreds = new Users();
-					
+
 					try {
-						m_userCreds.setMd5(MessageDigest.getInstance("MD5").digest((tempLogin+tempPassword).getBytes()).toString());
+						m_userCreds.setMd5(MessageDigest.getInstance("MD5")
+								.digest((tempLogin + tempPassword).getBytes()).toString());
 					} catch (NoSuchAlgorithmException e) {
 						e.printStackTrace();
 					}
 					SerializationManager.serializeData(users, "Users", "ser", "");
 				}
-				
+
 			}
 		} else if (message.startsWith("&A")) {
 			// admin control requests
