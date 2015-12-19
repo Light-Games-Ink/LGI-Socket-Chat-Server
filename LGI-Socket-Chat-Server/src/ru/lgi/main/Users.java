@@ -11,21 +11,23 @@ import java.io.Serializable;
  */
 @SuppressWarnings("serial")
 public class Users implements Serializable {
-	private String login, password;
+	private String md5;
+	private boolean isAdmin;
 
-	public String getPassword() {
-		return password;
+
+	public boolean isAdmin() {
+		return isAdmin;
 	}
 
-	public void setPassword(String password) {
-		this.password = password;
+	public void setAdmin(boolean isAdmin) {
+		this.isAdmin = isAdmin;
 	}
 
-	public String getLogin() {
-		return login;
+	public String getMd5() {
+		return md5;
 	}
 
-	public void setLogin(String login) {
-		this.login = login;
+	public void setMd5(String md5) {
+		this.md5 = md5;
 	}
 }

@@ -1,5 +1,10 @@
 package ru.lgi.main;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+
+import by.zti.SerializationManager;
 import naga.NIOSocket;
 import naga.SocketObserver;
 import naga.eventmachine.DelayedEvent;
@@ -16,11 +21,14 @@ class User implements SocketObserver {
 	private DelayedEvent m_disconnectEvent;
 	private Users m_userCreds;
 	public boolean isInTheList;
+	private boolean isAdmin;
+	private static ArrayList<Users> users = new ArrayList<Users>();
 
 	public String getM_name() {
 		return m_name;
 	}
 
+	@SuppressWarnings("unchecked")
 	User(Main server, NIOSocket socket) {
 		m_server = server;
 		m_socket = socket;
@@ -31,6 +39,8 @@ class User implements SocketObserver {
 		m_color = "#000000";
 		m_userCreds = new Users();
 		isInTheList = false;
+		isAdmin = false;
+		//users = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
 	}
 
 	public void connectionOpened(NIOSocket nioSocket) {
@@ -71,7 +81,6 @@ class User implements SocketObserver {
 		}, INACTIVITY_TIMEOUT);
 	}
 
-
 	public void packetReceived(NIOSocket socket, byte[] packet) {
 		// Create the string. For real life scenarios, you'd handle exceptions
 		// here.
@@ -87,28 +96,27 @@ class User implements SocketObserver {
 
 		if (m_name.equals("")) {
 
-//			isInTheList = false;
-//			for (User user : m_server.getM_users()) {
-//				if (m_name.equals(user.m_name))
-//					isInTheList = true;
-//			}
-//			if (!isInTheList) {
-				// User joined the chat.
-				m_name = message;
-				System.out.println(this + " logged in.");
-				if (m_color != null) {
-					m_server.broadcast(this,
-							"<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span> has joined the chat.");
-					m_socket.write(("Welcome " + "<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>"
-							+ ". There are " + m_server.getM_users().size() + " user(s) currently logged in.")
-									.getBytes());
+			// isInTheList = false;
+			// for (User user : m_server.getM_users()) {
+			// if (m_name.equals(user.m_name))
+			// isInTheList = true;
+			// socket.write(("This name already taken").getBytes());
+			// return;
+			// }
+			// User joined the chat.
+			m_name = message;
+			System.out.println(this + " logged in.");
+			if (m_color != null) {
+				m_server.broadcast(this,
+						"<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span> has joined the chat.");
+				m_socket.write(("Welcome " + "<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>"
+						+ ". There are " + m_server.getM_users().size() + " user(s) currently logged in.").getBytes());
 
-				} else {
-					m_server.broadcast(this, "<b>" + m_name + "</b> has joined the chat.");
-					m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
-							+ " user(s) currently logged in.").getBytes());
-				}
-			//}
+			} else {
+				m_server.broadcast(this, "<b>" + m_name + "</b> has joined the chat.");
+				m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
+						+ " user(s) currently logged in.").getBytes());
+			}
 
 			return;
 		} else if (m_server.m_users.contains(m_name)) {
@@ -123,11 +131,39 @@ class User implements SocketObserver {
 
 		} else if (message.startsWith("&L")) {
 			// login
-			m_userCreds.setLogin(message.substring(3, message.indexOf("&P") + 2));
-			m_userCreds.setPassword(message.substring(message.indexOf("&P") + 2));
-			System.out.println(m_userCreds.getLogin() + "/n" + m_userCreds.getPassword());
+			if (loginCheck(message.substring(2, message.lastIndexOf("&P") - 2),
+					message.substring(message.lastIndexOf("&P"), message.length()))) {
+				socket.write("".getBytes());
+				if (isAdmin) {
+					socket.write("&A".getBytes());
+				}
+			}
+			else if (message.startsWith("&R")) {
+				//register
+				byte i = 0;
+				if(message.endsWith("&A")){
+					isAdmin = true;
+					i = 2;
+				}
+				String tempLogin = message.substring(2, message.lastIndexOf("&P") - 2);
+				String tempPassword = message.substring(message.lastIndexOf("&P"), message.length() - i);
+				if(loginCheck(tempLogin, tempPassword)){
+					socket.write("Error! Check your creds.".getBytes());
+				}
+				else{
+					m_userCreds = new Users();
+					
+					try {
+						m_userCreds.setMd5(MessageDigest.getInstance("MD5").digest((tempLogin+tempPassword).getBytes()).toString());
+					} catch (NoSuchAlgorithmException e) {
+						e.printStackTrace();
+					}
+					SerializationManager.serializeData(users, "Users", "ser", "");
+				}
+				
+			}
 		} else if (message.startsWith("&A")) {
-			// admin control
+			// admin control requests
 		} else if (message.startsWith("&ULR")) {
 			// user list request
 			m_server.userListRequest(this);
@@ -147,5 +183,30 @@ class User implements SocketObserver {
 			m_socket.write(bytesToSend);
 		}
 
+	}
+
+	// deser data and md5 check + admin check
+	private boolean loginCheck(String login, String password) {
+		byte[] temp = (login + password).getBytes();
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("MD5");
+			byte[] theDigest = md.digest(temp);
+			for (Users user : users) {
+				if (user.getMd5().equals(theDigest)) {
+					if (user.isAdmin()) {
+						isAdmin = true;
+						return true;
+					}
+				} else {
+					return true;
+				}
+			}
+
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+
+		return false;
 	}
 }
