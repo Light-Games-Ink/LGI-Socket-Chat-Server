@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import by.zti.SerializationManager;
 import naga.ConnectionAcceptor;
 import naga.NIOServerSocket;
 import naga.NIOSocket;
@@ -22,7 +23,9 @@ public class Main implements ServerSocketObserver {
 	static int port;
 	static ArrayList<NIOSocket> sockets = new ArrayList<NIOSocket>();
 	static ArrayList<Settings> settings = new ArrayList<Settings>();
-	static ArrayList<Users> usersLaP = new ArrayList<Users>();
+	@SuppressWarnings("unchecked")
+	// public ArrayList<Users> users = new ArrayList<Users>();
+	public ArrayList<Users> users = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
 	private final EventMachine m_eventMachine;
 	public final List<User> m_users;
 
@@ -37,6 +40,7 @@ public class Main implements ServerSocketObserver {
 	// @SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		try {
+
 			// settings = (ArrayList<Settings>)
 			// SerializationManager.deSerializeData("Settings", "ser", "");
 			// usersLaP = (ArrayList<Users>)

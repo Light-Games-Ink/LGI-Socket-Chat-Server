@@ -2,7 +2,6 @@ package ru.lgi.main;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 
 import by.zti.SerializationManager;
 import naga.NIOSocket;
@@ -10,7 +9,6 @@ import naga.SocketObserver;
 import naga.eventmachine.DelayedEvent;
 import naga.packetreader.AsciiLinePacketReader;
 import naga.packetwriter.AsciiLinePacketWriter;
-
 class User implements SocketObserver {
 	private final static long LOGIN_TIMEOUT = 1 * 60 * 1000; // 1 min timeout
 	private final static long INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 min
@@ -22,13 +20,13 @@ class User implements SocketObserver {
 	private Users m_userCreds;
 	public boolean isInTheList;
 	private boolean isAdmin;
-	private static ArrayList<Users> users = new ArrayList<Users>();
+
 
 	public String getM_name() {
 		return m_name;
 	}
 
-	@SuppressWarnings("unchecked")
+
 	User(Main server, NIOSocket socket) {
 		m_server = server;
 		m_socket = socket;
@@ -40,8 +38,6 @@ class User implements SocketObserver {
 		m_userCreds = new Users();
 		isInTheList = false;
 		isAdmin = false;
-		// users = (ArrayList<Users>)
-		// SerializationManager.deSerializeData("Users", "ser", "");
 	}
 
 	public void connectionOpened(NIOSocket nioSocket) {
@@ -55,6 +51,8 @@ class User implements SocketObserver {
 
 		// Send the request to log in.
 		nioSocket.write("Please enter your name:".getBytes());
+		//login/register request
+		nioSocket.write("&LP".getBytes());
 	}
 
 	public String toString() {
@@ -83,6 +81,7 @@ class User implements SocketObserver {
 	}
 
 	public void packetReceived(NIOSocket socket, byte[] packet) {
+		
 		// Create the string. For real life scenarios, you'd handle exceptions
 		// here.
 		String message = new String(packet).trim();
@@ -95,8 +94,7 @@ class User implements SocketObserver {
 
 		// In this protocol, the first line entered is the name.
 
-		if (m_name.equals("")) {
-
+		if (m_name.equals("kk")) {
 			// isInTheList = false;
 			// for (User user : m_server.getM_users()) {
 			// if (m_name.equals(user.m_name))
@@ -132,37 +130,62 @@ class User implements SocketObserver {
 
 		} else if (message.startsWith("&L")) {
 			// login
-			if (loginCheck(message.substring(2, message.lastIndexOf("&P") - 2),
-					message.substring(message.lastIndexOf("&P"), message.length()))) {
-				socket.write("".getBytes());
+			if (loginCheck(message.substring(2, message.lastIndexOf("&P")),
+					message.substring(message.lastIndexOf("&P") + 2, message.length()))) {
+				m_name = message.substring(2, message.lastIndexOf("&P"));
+				System.out.println(this + " logged in.");
+				m_server.broadcast(this, "<b>" + m_name + "</b> has joined the chat.");
+				m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
+						+ " user(s) currently logged in.").getBytes());
 				if (isAdmin) {
 					socket.write("&A".getBytes());
 				}
-			} else if (message.startsWith("&R")) {
+				
+			} else {
+				socket.write("Incorrect user name/password".getBytes());
+				socket.write("&LP".getBytes());
+			}
+		}
+		else if (message.startsWith("&R")) {
 				// register
 				byte i = 0;
 				if (message.endsWith("&A")) {
 					isAdmin = true;
 					i = 2;
 				}
-				String tempLogin = message.substring(2, message.lastIndexOf("&P") - 2);
-				String tempPassword = message.substring(message.lastIndexOf("&P"), message.length() - i);
+				String tempLogin = message.substring(2, message.lastIndexOf("&P"));
+				String tempPassword = message.substring(message.lastIndexOf("&P") + 2, message.length() - i);
 				if (loginCheck(tempLogin, tempPassword)) {
 					socket.write("Error! Check your creds.".getBytes());
+					socket.write("&LP".getBytes());
 				} else {
 					m_userCreds = new Users();
 
 					try {
-						m_userCreds.setMd5(MessageDigest.getInstance("MD5")
-								.digest((tempLogin + tempPassword).getBytes()).toString());
+						StringBuffer hexString = new StringBuffer();
+						MessageDigest md5 = MessageDigest.getInstance("md5");
+						md5.reset();
+						md5.update((tempLogin+tempPassword).getBytes());
+						byte[] theDigest = md5.digest();
+						for (int k = 0; k < theDigest.length; k++) {
+							hexString.append(Integer.toHexString((0xF0 & theDigest[k]) >> 4));
+							hexString.append(Integer.toHexString(0x0F & theDigest[k]));
+						}
+						m_userCreds.setMd5(hexString.toString());
 					} catch (NoSuchAlgorithmException e) {
 						e.printStackTrace();
 					}
-					SerializationManager.serializeData(users, "Users", "ser", "");
+					m_server.users.add(m_userCreds);
+					SerializationManager.serializeData(m_server.users, "Users", "ser", "");
+					m_name = tempLogin;
+					System.out.println(this + " registered.");
+					m_server.broadcast(this, "<b>" + m_name + "</b> has joined the chat.");
+					m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
+							+ " user(s) currently logged in.").getBytes());
 				}
 
 			}
-		} else if (message.startsWith("&A")) {
+		 else if (message.startsWith("&A")) {
 			// admin control requests
 		} else if (message.startsWith("&ULR")) {
 			// user list request
@@ -187,20 +210,22 @@ class User implements SocketObserver {
 
 	// deser data and md5 check + admin check
 	private boolean loginCheck(String login, String password) {
-		byte[] temp = (login + password).getBytes();
-		MessageDigest md;
 		try {
-			md = MessageDigest.getInstance("MD5");
-			byte[] theDigest = md.digest(temp);
-			for (Users user : users) {
-				if (user.getMd5().equals(theDigest)) {
-					if (user.isAdmin()) {
-						isAdmin = true;
-						return true;
-					}
-				} else {
+			StringBuffer hexString = new StringBuffer();
+			MessageDigest md5 = MessageDigest.getInstance("md5");
+			md5.reset();
+			md5.update((login+password).getBytes());
+			byte[] theDigest = md5.digest();
+			for (int i = 0; i < theDigest.length; i++) {
+				hexString.append(Integer.toHexString((0xF0 & theDigest[i]) >> 4));
+				hexString.append(Integer.toHexString(0x0F & theDigest[i]));
+			}
+			
+			for (Users user : m_server.users) {
+				if (user.getMd5().equals(hexString.toString())) {
+					if (user.isAdmin()) isAdmin = true;
 					return true;
-				}
+				} 
 			}
 
 		} catch (NoSuchAlgorithmException e) {
