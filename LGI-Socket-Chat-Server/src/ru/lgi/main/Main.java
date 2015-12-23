@@ -23,12 +23,12 @@ public class Main implements ServerSocketObserver {
 	static int port;
 	static ArrayList<NIOSocket> sockets = new ArrayList<NIOSocket>();
 	static ArrayList<Settings> settings = new ArrayList<Settings>();
-	@SuppressWarnings("unchecked")
+
 	// public ArrayList<Users> users = new ArrayList<Users>();
-	public ArrayList<Users> users = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
+	public static ArrayList<Users> users ;
 	private final EventMachine m_eventMachine;
 	public final List<User> m_users;
-
+	private static int version = 0, update_version = 0;
 	Main(EventMachine machine) {
 		m_eventMachine = machine;
 		m_users = new ArrayList<User>();
@@ -37,14 +37,26 @@ public class Main implements ServerSocketObserver {
 	/**
 	 * @param args
 	 */
-	// @SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		try {
 
 			// settings = (ArrayList<Settings>)
 			// SerializationManager.deSerializeData("Settings", "ser", "");
-			// usersLaP = (ArrayList<Users>)
-			// SerializationManager.deSerializeData("Users", "ser", "");
+			try {
+				update_version = Integer.parseInt(Updater.getLatestVersion());
+				System.out.println(update_version);
+				if (update_version > version) {
+	               new UpdateInfo(update_version);
+	            }
+			} catch (Exception e1) {
+				System.out.println(e1.getMessage());
+			}
+			while(Thread.activeCount() > 1){ 
+				
+			}
+			
+			users = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
 			port = Integer.parseInt("5674");
 			EventMachine machine = new EventMachine();
 			NIOServerSocket socket = machine.getNIOService().openServerSocket(port);

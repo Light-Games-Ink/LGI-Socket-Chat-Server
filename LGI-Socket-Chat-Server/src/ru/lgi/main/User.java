@@ -80,6 +80,7 @@ class User implements SocketObserver {
 		}, INACTIVITY_TIMEOUT);
 	}
 
+	@SuppressWarnings("static-access")
 	public void packetReceived(NIOSocket socket, byte[] packet) {
 		
 		// Create the string. For real life scenarios, you'd handle exceptions
@@ -209,6 +210,7 @@ class User implements SocketObserver {
 	}
 
 	// deser data and md5 check + admin check
+	@SuppressWarnings("static-access")
 	private boolean loginCheck(String login, String password) {
 		try {
 			StringBuffer hexString = new StringBuffer();
