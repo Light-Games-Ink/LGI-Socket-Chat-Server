@@ -119,7 +119,7 @@ class User implements SocketObserver {
 			}
 
 			return;
-		} else if (m_server.m_users.contains(m_name)) {
+		} else if (m_server.users.contains(m_name)) {
 			m_socket.write("This nickname is busy".getBytes());
 			return;
 		}
@@ -127,6 +127,19 @@ class User implements SocketObserver {
 			// color setting
 			String temp_message = message.substring(2, 9);
 			m_color = temp_message;
+			int iterator = 0;
+			for (Users user: m_server.users){
+				if(user.getLogin().equals(m_name)){
+					//m_server.m_users.get(iterator).m_color = m_color;
+					//user.m_color = m_color;
+					//m_server.m_users.set(iterator, user);
+					//m_server.m_users.get(iterator).m_userCreds.setColor_s(m_color);
+					m_server.users.get(iterator).setColor_s(m_color);
+					SerializationManager.serializeData(m_server.users, "Users", "ser", "");
+					break;
+				}
+				iterator++;
+			}
 			message = message.substring(9, message.length());
 
 		} else if (message.startsWith("&L")) {
@@ -134,6 +147,7 @@ class User implements SocketObserver {
 			if (loginCheck(message.substring(2, message.lastIndexOf("&P")),
 					message.substring(message.lastIndexOf("&P") + 2, message.length()))) {
 				m_name = message.substring(2, message.lastIndexOf("&P"));
+				
 				System.out.println(this + " logged in.");
 				m_server.broadcast(this, "<b>" + m_name + "</b> has joined the chat.");
 				m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
@@ -176,6 +190,8 @@ class User implements SocketObserver {
 					} catch (NoSuchAlgorithmException e) {
 						e.printStackTrace();
 					}
+					m_userCreds.setColor_s(m_color);
+					m_userCreds.setLogin(tempLogin);
 					m_server.users.add(m_userCreds);
 					SerializationManager.serializeData(m_server.users, "Users", "ser", "");
 					m_name = tempLogin;
@@ -188,7 +204,8 @@ class User implements SocketObserver {
 			}
 		 else if (message.startsWith("&A")) {
 			// admin control requests
-		} else if (message.startsWith("&ULR")) {
+		} 
+		 else if (message.startsWith("&ULR")) {
 			// user list request
 			m_server.userListRequest(this);
 		} else {
@@ -223,9 +240,12 @@ class User implements SocketObserver {
 				hexString.append(Integer.toHexString(0x0F & theDigest[i]));
 			}
 			
+			if(m_server.users != null)
 			for (Users user : m_server.users) {
+				if(user.getLogin().equals(login))
 				if (user.getMd5().equals(hexString.toString())) {
 					if (user.isAdmin()) isAdmin = true;
+					m_color = user.getColor_s();
 					return true;
 				} 
 			}

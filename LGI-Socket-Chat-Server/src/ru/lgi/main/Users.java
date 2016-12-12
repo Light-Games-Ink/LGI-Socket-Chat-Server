@@ -13,6 +13,9 @@ import java.io.Serializable;
 public class Users implements Serializable {
 	private String md5;
 	private boolean isAdmin;
+	private String color_s;
+	private String login;
+	
 
 
 	public boolean isAdmin() {
@@ -29,5 +32,21 @@ public class Users implements Serializable {
 
 	public void setMd5(String md5) {
 		this.md5 = md5;
+	}
+
+	public String getColor_s() {
+		return color_s;
+	}
+
+	public void setColor_s(String color_s) {
+		this.color_s = color_s;
+	}
+
+	public String getLogin() {
+		return login;
+	}
+
+	public void setLogin(String login) {
+		this.login = login;
 	}
 }

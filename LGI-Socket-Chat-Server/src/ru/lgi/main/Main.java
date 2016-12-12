@@ -4,6 +4,8 @@
 package ru.lgi.main;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,13 +27,14 @@ public class Main implements ServerSocketObserver {
 	static ArrayList<Settings> settings = new ArrayList<Settings>();
 
 	// public ArrayList<Users> users = new ArrayList<Users>();
-	public static ArrayList<Users> users ;
+	public static ArrayList<Users> users ; //ser/deser list
 	private final EventMachine m_eventMachine;
-	public final List<User> m_users;
+	public final List<User> m_users; //reference to Users class
 	private static int version = 0, update_version = 0;
 	Main(EventMachine machine) {
 		m_eventMachine = machine;
 		m_users = new ArrayList<User>();
+		
 	}
 
 	/**
@@ -41,8 +44,8 @@ public class Main implements ServerSocketObserver {
 	public static void main(String[] args) {
 		try {
 
-			// settings = (ArrayList<Settings>)
-			// SerializationManager.deSerializeData("Settings", "ser", "");
+			/* settings = (ArrayList<Settings>)
+			 SerializationManager.deSerializeData("Settings", "ser", "");*/
 			try {
 				update_version = Integer.parseInt(Updater.getLatestVersion());
 				System.out.println(update_version);
@@ -54,6 +57,32 @@ public class Main implements ServerSocketObserver {
 			}
 			while(Thread.activeCount() > 1){ 
 				
+			}
+			if(args[1].equals("1234")){
+		    Users kek = new Users();
+		    kek.setColor_s("#000000");
+		    kek.setAdmin(false);
+		    StringBuffer hexString = new StringBuffer();
+			MessageDigest md5 = null;
+			try {
+				md5 = MessageDigest.getInstance("md5");
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			md5.reset();
+			md5.update(("kek"+"top").getBytes());
+			byte[] theDigest = md5.digest();
+			for (int k = 0; k < theDigest.length; k++) {
+				hexString.append(Integer.toHexString((0xF0 & theDigest[k]) >> 4));
+				hexString.append(Integer.toHexString(0x0F & theDigest[k]));
+			}
+		    kek.setMd5(hexString.toString());
+		    kek.setLogin("kek");
+		    users = new ArrayList<Users>();
+		    users.add(kek);
+		    SerializationManager.serializeData(users, "Users", "ser", "");
+		    users.remove(0);
+		    users = null;
 			}
 			
 			users = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
