@@ -58,6 +58,9 @@ public class Main implements ServerSocketObserver {
 			while(Thread.activeCount() > 1){ 
 				
 			}
+			/*
+			 * just for test
+			 */
 			if(args[1].equals("1234")){
 		    Users kek = new Users();
 		    kek.setColor_s("#000000");
@@ -84,7 +87,9 @@ public class Main implements ServerSocketObserver {
 		    users.remove(0);
 		    users = null;
 			}
-			
+			/*
+			 * end test
+			 */
 			users = (ArrayList<Users>) SerializationManager.deSerializeData("Users", "ser", "");
 			port = Integer.parseInt("5674");
 			EventMachine machine = new EventMachine();

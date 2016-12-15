@@ -15,7 +15,7 @@ class User implements SocketObserver {
 																	// timeout
 	private final Main m_server;
 	private final NIOSocket m_socket;
-	private String m_name, m_color;
+	private String m_name, m_color, m_nickname;
 	private DelayedEvent m_disconnectEvent;
 	private Users m_userCreds;
 	public boolean isInTheList;
@@ -38,6 +38,7 @@ class User implements SocketObserver {
 		m_userCreds = new Users();
 		isInTheList = false;
 		isAdmin = false;
+		m_nickname = "";
 	}
 
 	public void connectionOpened(NIOSocket nioSocket) {
@@ -119,28 +120,41 @@ class User implements SocketObserver {
 			}
 
 			return;
-		} else if (m_server.users.contains(m_name)) {
+		} /* NAME CHECK
+		 else if (m_server.users.contains(m_name)) {
 			m_socket.write("This nickname is busy".getBytes());
 			return;
-		}
+		}*/
+		
 		if (message.startsWith("&C")) {
-			// color setting
+			// color and nickname setting
 			String temp_message = message.substring(2, 9);
 			m_color = temp_message;
 			int iterator = 0;
 			for (Users user: m_server.users){
 				if(user.getLogin().equals(m_name)){
-					//m_server.m_users.get(iterator).m_color = m_color;
-					//user.m_color = m_color;
-					//m_server.m_users.set(iterator, user);
-					//m_server.m_users.get(iterator).m_userCreds.setColor_s(m_color);
 					m_server.users.get(iterator).setColor_s(m_color);
 					SerializationManager.serializeData(m_server.users, "Users", "ser", "");
 					break;
 				}
 				iterator++;
 			}
-			message = message.substring(9, message.length());
+			message = message.substring(9); //9 - color + flag length
+			if (message.startsWith("&N")){
+				message = message.substring(2); //2 - flag length
+				int name_length = Integer.parseInt(message.substring(0, 1));
+				temp_message = message.substring(1, name_length); //new name
+				
+				for (Users User : m_server.users) {
+					if(User.getLogin().equals(m_name)){
+						m_nickname = temp_message;
+						User.setNickname(m_nickname);
+					}
+				}
+				message = message.substring(name_length+1); //name + length removal
+				
+			}
+			
 
 		} else if (message.startsWith("&L")) {
 			// login
@@ -149,8 +163,8 @@ class User implements SocketObserver {
 				m_name = message.substring(2, message.lastIndexOf("&P"));
 				
 				System.out.println(this + " logged in.");
-				m_server.broadcast(this, "<b>" + m_name + "</b> has joined the chat.");
-				m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
+				m_server.broadcast(this, "<b>" + m_nickname + "</b> has joined the chat.");
+				m_socket.write(("Welcome <b>" + m_nickname + "</b>. There are " + m_server.getM_users().size()
 						+ " user(s) currently logged in.").getBytes());
 				if (isAdmin) {
 					socket.write("&A".getBytes());
@@ -192,9 +206,10 @@ class User implements SocketObserver {
 					}
 					m_userCreds.setColor_s(m_color);
 					m_userCreds.setLogin(tempLogin);
+					m_userCreds.setNickname(tempLogin);
 					m_server.users.add(m_userCreds);
 					SerializationManager.serializeData(m_server.users, "Users", "ser", "");
-					m_name = tempLogin;
+					m_nickname = m_name = tempLogin;
 					System.out.println(this + " registered.");
 					m_server.broadcast(this, "<b>" + m_name + "</b> has joined the chat.");
 					m_socket.write(("Welcome <b>" + m_name + "</b>. There are " + m_server.getM_users().size()
@@ -210,7 +225,7 @@ class User implements SocketObserver {
 			m_server.userListRequest(this);
 		} else {
 			m_server.broadcast(this,
-					"<span style=\"color:" + m_color + "\"><b>" + m_name + "</b></span>" + ": " + message);
+					"<span style=\"color:" + m_color + "\"><b>" + m_nickname + "</b></span>" + ": " + message);
 		}
 	}
 
@@ -220,7 +235,7 @@ class User implements SocketObserver {
 
 	public void sendBroadcast(byte[] bytesToSend) {
 		// Only send broadcast to users logged in.
-		if (!m_name.equals("")) {
+		if (!m_name.equals("") & !m_nickname.equals("")) {
 			m_socket.write(bytesToSend);
 		}
 
@@ -246,6 +261,7 @@ class User implements SocketObserver {
 				if (user.getMd5().equals(hexString.toString())) {
 					if (user.isAdmin()) isAdmin = true;
 					m_color = user.getColor_s();
+					m_nickname = user.getNickname();
 					return true;
 				} 
 			}
@@ -256,4 +272,7 @@ class User implements SocketObserver {
 
 		return false;
 	}
+	
+	
+	
 }

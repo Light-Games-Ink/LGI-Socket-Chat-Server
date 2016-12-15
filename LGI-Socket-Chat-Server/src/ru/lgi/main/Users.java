@@ -15,6 +15,7 @@ public class Users implements Serializable {
 	private boolean isAdmin;
 	private String color_s;
 	private String login;
+    private String nickname;
 	
 
 
@@ -48,5 +49,13 @@ public class Users implements Serializable {
 
 	public void setLogin(String login) {
 		this.login = login;
+	}
+
+	public String getNickname() {
+		return nickname;
+	}
+
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
 	}
 }
